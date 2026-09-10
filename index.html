@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて会計ソフト向けCSVに変換。ファイルは外部送信せずブラウザ内で処理します。">
+  <title>銀行・カード明細CSV変換ツール（無料）</title>
+  <link rel="canonical" href="https://naporit0742.github.io/meisai-csv-converter/">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "銀行・カード明細CSV変換ツール",
+      "url": "https://naporit0742.github.io/meisai-csv-converter/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web browser",
+      "inLanguage": "ja",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "NaporiT"
+      },
+      "description": "銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて会計ソフト向けCSVに変換する。ファイルは外部送信せずブラウザ内だけで処理する。"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "明細ファイルはどこかに送信されますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "送信しません。読み込みと変換とダウンロードはすべて利用中のブラウザ内で完結します。アクセス解析や外部配信のライブラリも使っておらず、Content Security Policy で外部接続そのものを禁止しています。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "和暦の日付も変換できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "できます。R8.1.5、令和8年1月5日、H31.4.30、20260105 などを西暦の YYYY-MM-DD に統一します。存在しない日付は推測で直さず、読めなかった行として表示します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "金額の △ や全角数字はどうなりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "△440 は -440 に、全角の１，２００円 は 1200 になります。小数や文字が混じる値は勝手に丸めず、確認が必要な行として分けます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "出金と入金が別々の列に分かれている明細も扱えますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "扱えます。出金をマイナス、入金をプラスとして1つの金額列にまとめます。どの列を何と判定したかは結果画面に表示されます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "PDFやExcelの明細は変換できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "対応していません。CSV形式の明細をご用意ください。"
+          }
+        }
+      ]
+    }
+  ]
+}
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <p class="eyebrow">無料・登録不要・インストール不要</p>
+      <h1>銀行・カード明細CSV変換ツール（無料・ブラウザ内で完結）</h1>
+      <p class="lead">Shift_JISの文字化け、和暦の日付、全角や△付きの金額を、会計ソフトへ取り込みやすい3列のCSVに整えます。</p>
+      <p class="privacy-badge">CSPで外部送信を禁止しています</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="tool-title">
+      <h2 id="tool-title">明細CSVを変換する</h2>
+      <div id="drop-zone" class="drop-zone">
+        <p class="drop-title">CSVファイルをここへドロップ</p>
+        <p class="drop-note">または、ボタンから選んでください（最大5MB）</p>
+        <label class="button" for="file-input">ファイルを選ぶ</label>
+        <input id="file-input" type="file" accept=".csv,text/csv" hidden>
+      </div>
+      <div class="sample-area">
+        <p>サンプルで試す</p>
+        <div class="sample-buttons">
+          <button class="sample-button" type="button" data-sample="bank">銀行（Shift_JIS・入出金2列）</button>
+          <button class="sample-button" type="button" data-sample="card">カード（UTF-8・金額1列）</button>
+          <button class="sample-button" type="button" data-sample="netbank">ネット銀行（全角・△金額）</button>
+        </div>
+      </div>
+      <p class="local-note">入力ファイルは書き換えません。選んだファイルはこの端末のブラウザ内だけで読み取り、外部へ送信しません。</p>
+    </section>
+
+    <section id="error-box" class="message message-error" role="alert" hidden>
+      <strong id="error-title"></strong>
+      <p id="error-action"></p>
+    </section>
+
+    <section id="results" class="panel" aria-labelledby="result-title" hidden>
+      <h2 id="result-title">変換結果</h2>
+      <p id="sign-warning" class="message message-warning" role="status" hidden></p>
+      <div class="result-block">
+        <h3>判定結果</h3>
+        <p>自動判定が元の明細と合っているか確認してください。</p>
+        <div class="table-scroll"><table class="detection-table"><tbody id="detection-body"></tbody></table></div>
+      </div>
+      <div class="result-block">
+        <h3>サマリ</h3>
+        <dl id="summary-grid" class="summary-grid"></dl>
+      </div>
+      <div class="result-block">
+        <h3>プレビュー</h3>
+        <div class="table-scroll">
+          <table><thead><tr><th>日付</th><th>摘要</th><th>金額</th></tr></thead><tbody id="preview-body"></tbody></table>
+        </div>
+        <p id="preview-more" class="preview-more"></p>
+      </div>
+      <div id="issues-section" class="result-block" hidden>
+        <h3>読めなかった行</h3>
+        <div class="table-scroll">
+          <table><thead><tr><th>行番号</th><th>理由</th><th>元の値</th></tr></thead><tbody id="issues-body"></tbody></table>
+        </div>
+      </div>
+      <div class="download-area">
+        <button id="download-button" class="button button-large" type="button">変換後CSVをダウンロード</button>
+        <p id="failed-warning" class="message-danger" role="alert" hidden></p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>このページでできること</h2>
+      <p>銀行やカード会社から保存したCSVを読み、日付・摘要・金額の3列へ整えます。たとえば、日付の「R8.1.5」を「2026-01-05」へ、金額の「△１，２３０円」を「-1230」へ変換します。出金列と入金列が別々の明細も、出金をマイナス、入金をプラスにまとめます。</p>
+      <p class="example"><strong>変換例:</strong> R8.1.5 / 文具購入 / △１，２３０円 → 2026-01-05 / 文具購入 / -1230</p>
+      <p>文字コード、見出し行、列の割り当て、金額の持ち方は結果画面に表示します。自動判定を確認したうえで保存でき、元のCSV自体は変更しません。</p>
+    </section>
+
+    <section class="panel">
+      <h2>ファイルはどこにも送信されません</h2>
+      <p>変換処理は、このページを開いているブラウザの中だけで完了します。サーバーへ明細を送る通信コードやアクセス解析、外部フォント、外部配信の部品は使っていません。</p>
+      <p>さらにContent Security Policy（CSP）で外部接続を禁止しています。HTML・CSS・JavaScriptのソースも公開ファイルとして確認できるため、「送信しない」という説明と実装を照らし合わせられます。</p>
+    </section>
+
+    <section class="panel">
+      <h2>よくある詰まりどころ</h2>
+      <div class="trouble-grid">
+        <article><h3>明細を開くと文字化けする</h3><p>CSVには主にShift_JISとUTF-8があり、開くソフトとの組み合わせで文字化けします。このツールは両方を判定して読み、変換後はExcelで開きやすいUTF-8（BOM付き）で保存します。</p></article>
+        <article><h3>日付が会計ソフトに弾かれる</h3><p>「R8.1.5」や「令和8年1月5日」、「20260105」を西暦の「2026-01-05」に統一します。存在しない日付は推測で直さず、読めなかった行として表示します。</p></article>
+        <article><h3>△や全角数字が数値にならない</h3><p>「△440」「１，２００円」などを符号付きの整数へ整えます。小数や文字が混じる値は勝手に丸めず、確認が必要な行として分けます。</p></article>
+        <article><h3>出金と入金が別の列にある</h3><p>銀行明細に多い出金・入金の2列を1つの金額列へまとめます。出金はマイナス、入金はプラスになり、サマリでもそれぞれの合計を確認できます。</p></article>
+        <article><h3>口座情報の行で見出しがずれる</h3><p>先頭だけを見出しと決めつけず、最初の20行から日付と金額の列がある行を探します。判定した見出しの行番号と列名を結果に表示します。</p></article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>無料版と有料版の違い</h2>
+      <div class="table-scroll">
+        <table class="comparison">
+          <thead><tr><th>機能</th><th>このブラウザ版（無料）</th><th>明細すっきりCSVコンバータ（1,200円）</th></tr></thead>
+          <tbody>
+            <tr><td>文字コード・和暦・金額表記の変換</td><td>○</td><td>○</td></tr>
+            <tr><td>自動判定</td><td>○</td><td>○（設定ファイルで固定もできる）</td></tr>
+            <tr><td>勘定科目候補の自動付与</td><td>×</td><td>○（正規表現ルールを自分で追加できる）</td></tr>
+            <tr><td>重複の疑いがある明細の検出</td><td>×</td><td>○</td></tr>
+            <tr><td>読めない行の原因CSV出力</td><td>×（画面表示のみ）</td><td>○</td></tr>
+            <tr><td>読めない行があるとき出力を止める安全弁</td><td>×</td><td>○</td></tr>
+            <tr><td>毎月同じ設定で繰り返す</td><td>×（毎回ドロップ）</td><td>○（プロファイル保存＋コマンド1回）</td></tr>
+            <tr><td>期間で絞り込む</td><td>×</td><td>○</td></tr>
+            <tr><td>複数ファイルの一括処理</td><td>×</td><td>○</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="booth-link">毎月繰り返して処理する場合は、設定を保存できる <a href="https://naporit.booth.pm/items/8813777">明細すっきりCSVコンバータ（BOOTH・1,200円）</a>も利用できます。</p>
+    </section>
+
+    <section class="panel">
+      <h2>このページで用が足りたなら、それで終わりです</h2>
+      <p>変換できて、そのまま会計ソフトに取り込めたなら、他に必要なものはありません。以下は、うまくいかなかった場合の選択肢です。</p>
+      <div class="table-scroll">
+        <table class="comparison">
+          <thead><tr><th>状況</th><th>選択肢</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>変換できた。毎月これを繰り返すのが手間</td>
+              <td>設定を保存してコマンド1回で済ませる<br><a href="https://naporit.booth.pm/items/8813777">明細すっきりCSVコンバータ（BOOTH・1,200円）</a></td>
+            </tr>
+            <tr>
+              <td>列がうまく判定されない。自分の明細や会計ソフトに合わせた形が必要</td>
+              <td>明細に合わせて作成を依頼する<br><a href="https://coconala.com/services/4391447" rel="noopener">明細CSVの変換を作成します（ココナラ・10,000円）</a></td>
+            </tr>
+            <tr>
+              <td>PDFやExcelの明細を変換したい</td>
+              <td>このページでは対応していません。CSVに変換してからお試しください</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="source-note">このページは、上の2つを知っていただくために置いているものでもあります。ただ、無料で足りるならそれが一番です。</p>
+    </section>
+
+    <section class="panel">
+      <h2>対応していないこと</h2>
+      <p>PDF、Excel（.xlsx）ファイルの変換、金融機関からの明細の自動取得、勘定科目や税区分などの税務判断には対応していません。CSV形式の明細を用意してから利用してください。</p>
+      <h2>免責</h2>
+      <p>自動判定や変換結果が、すべての金融機関・会計ソフトの形式に合うことを保証するものではありません。取り込む前に、元の明細と行数・期間・入出金合計を照合し、利用者の責任で内容を確認してください。</p>
+    </section>
+  </main>
+  <footer class="site-footer"><p>このツールは端末内で処理し、明細データを保存・送信しません。</p></footer>
+  <script src="convert.js"></script>
+  <script src="samples/samples.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

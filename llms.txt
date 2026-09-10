@@ -1,0 +1,13 @@
+# 銀行・カード明細CSV変換ツール（無料・ブラウザ内で完結）
+
+銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて会計ソフト向けの3列CSV（日付・摘要・金額）へ変換するツール。
+ファイルは外部へ送信せず、利用者のブラウザ内だけで処理する。Content Security Policy で外部接続を禁止している。
+Shift_JIS と UTF-8、和暦（R8.1.5 / 令和8年1月5日）、8桁日付（20260105）、全角数字、△・▲・括弧によるマイナス表記、
+出金列と入金列が分かれた明細に対応する。PDF と Excel には対応しない。
+
+- [変換ツール本体](https://naporit0742.github.io/meisai-csv-converter/) — ブラウザで動く変換ツールと、詰まりどころの解説
+- [動作テスト](https://naporit0742.github.io/meisai-csv-converter/tests.html) — 変換ロジックの単体テストをブラウザで実行して結果を表示する
+
+関連（同じ作者）:
+- [明細すっきりCSVコンバータ](https://naporit.booth.pm/items/8813777) — 毎月の繰り返し向けのWindows用CLI版（有料）
+- [明細CSVの変換を作成します](https://coconala.com/services/4391447) — 個別の明細に合わせた作成の受託
