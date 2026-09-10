@@ -1,0 +1,2 @@
+# サンプルCSVはバイト列を固定する（CP932・BOM・改行を保つ。samples.js の埋め込みと一致させるため）
+samples/*.csv -text
