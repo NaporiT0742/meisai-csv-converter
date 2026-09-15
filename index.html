@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて会計ソフト向けCSVに変換。ファイルは外部送信せずブラウザ内で処理します。">
+  <meta name="description" content="銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて日付・摘要・金額の3列に変換。freee・弥生・マネーフォワードなどへ取り込む前の下ごしらえに。ファイルは外部送信せずブラウザ内で処理します。">
   <title>銀行・カード明細CSV変換ツール（無料）</title>
   <link rel="canonical" href="https://naporit0742.github.io/meisai-csv-converter/">
   <script type="application/ld+json">
@@ -28,7 +28,7 @@
         "@type": "Person",
         "name": "NaporiT"
       },
-      "description": "銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて会計ソフト向けCSVに変換する。ファイルは外部送信せずブラウザ内だけで処理する。"
+      "description": "銀行やカードの明細CSVを、文字コード・和暦・金額表記を整えて日付・摘要・金額の3列に変換する。freee・弥生・マネーフォワードなどへ取り込む前の下ごしらえに使う。ファイルは外部送信せずブラウザ内だけで処理する。"
     },
     {
       "@type": "FAQPage",
@@ -67,6 +67,14 @@
         },
         {
           "@type": "Question",
+          "name": "freeeや弥生、マネーフォワードに取り込めますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "このツールが出すのは日付・摘要・金額の3列のCSVです。多くの会計ソフトはこの3つを含むCSVを取り込めますが、列の順序や見出しの名前は各ソフトの取込画面で対応づける必要があります。特定のソフトへの取り込みを保証するものではなく、各社との提携もありません。取り込む前に行数と入出金の合計を元の明細と照合してください。"
+          }
+        },
+        {
+          "@type": "Question",
           "name": "PDFやExcelの明細は変換できますか？",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -85,7 +93,7 @@
     <div class="header-inner">
       <p class="eyebrow">無料・登録不要・インストール不要</p>
       <h1>銀行・カード明細CSV変換ツール（無料・ブラウザ内で完結）</h1>
-      <p class="lead">Shift_JISの文字化け、和暦の日付、全角や△付きの金額を、会計ソフトへ取り込みやすい3列のCSVに整えます。</p>
+      <p class="lead">Shift_JISの文字化け、和暦の日付、全角や△付きの金額を、<strong>日付・摘要・金額</strong>の3列に整えます。freee、弥生、マネーフォワードなどへ取り込む前の下ごしらえに使えます。</p>
       <p class="privacy-badge">CSPで外部送信を禁止しています</p>
     </div>
   </header>
@@ -217,10 +225,23 @@
     </section>
 
     <section class="panel">
+      <h2>よくある質問</h2>
+      <div class="trouble-grid">
+        <article><h3>明細ファイルはどこかに送信されますか？</h3><p>送信しません。読み込みと変換とダウンロードはすべて利用中のブラウザ内で完結します。アクセス解析や外部配信のライブラリも使っておらず、Content Security Policy で外部接続そのものを禁止しています。</p></article>
+        <article><h3>和暦の日付も変換できますか？</h3><p>できます。R8.1.5、令和8年1月5日、H31.4.30、20260105 などを西暦の YYYY-MM-DD に統一します。存在しない日付は推測で直さず、読めなかった行として表示します。</p></article>
+        <article><h3>金額の △ や全角数字はどうなりますか？</h3><p>△440 は -440 に、全角の１，２００円 は 1200 になります。小数や文字が混じる値は勝手に丸めず、確認が必要な行として分けます。</p></article>
+        <article><h3>出金と入金が別々の列に分かれている明細も扱えますか？</h3><p>扱えます。出金をマイナス、入金をプラスとして1つの金額列にまとめます。どの列を何と判定したかは結果画面に表示されます。</p></article>
+        <article><h3>freeeや弥生、マネーフォワードに取り込めますか？</h3><p>このツールが出すのは日付・摘要・金額の3列のCSVです。多くの会計ソフトはこの3つを含むCSVを取り込めますが、列の順序や見出しの名前は各ソフトの取込画面で対応づける必要があります。特定のソフトへの取り込みを保証するものではなく、各社との提携もありません。取り込む前に行数と入出金の合計を元の明細と照合してください。</p></article>
+        <article><h3>PDFやExcelの明細は変換できますか？</h3><p>対応していません。CSV形式の明細をご用意ください。</p></article>
+      </div>
+    </section>
+
+    <section class="panel">
       <h2>対応していないこと</h2>
       <p>PDF、Excel（.xlsx）ファイルの変換、金融機関からの明細の自動取得、勘定科目や税区分などの税務判断には対応していません。CSV形式の明細を用意してから利用してください。</p>
       <h2>免責</h2>
       <p>自動判定や変換結果が、すべての金融機関・会計ソフトの形式に合うことを保証するものではありません。取り込む前に、元の明細と行数・期間・入出金合計を照合し、利用者の責任で内容を確認してください。</p>
+      <p>文中の freee、弥生、マネーフォワードは各社の商標または登録商標です。本ツールはこれらの提供元とは関係がなく、提携・推奨・動作保証のいずれもありません。取り込み先のソフト名は、利用者が用途を判断できるように挙げているだけです。</p>
     </section>
   </main>
   <footer class="site-footer"><p>このツールは端末内で処理し、明細データを保存・送信しません。</p></footer>
